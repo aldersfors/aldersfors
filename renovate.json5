@@ -1,0 +1,17 @@
+{
+  // This repo follows its own preset, plus a manager for the validator pin.
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["github>aldersfors/aldersfors:default.json5"],
+
+  customManagers: [
+    {
+      // RENOVATE_VERSION in mise.toml pins the validator. It runs through npx,
+      // not as a mise tool, so the mise manager never sees it.
+      customType: "regex",
+      managerFilePatterns: ["/(^|/)mise\\.toml$/"],
+      matchStrings: ["RENOVATE_VERSION\\s*=\\s*\"(?<currentValue>[^\"]+)\""],
+      datasourceTemplate: "npm",
+      depNameTemplate: "renovate",
+    },
+  ],
+}

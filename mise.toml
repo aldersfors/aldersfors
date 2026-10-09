@@ -1,0 +1,30 @@
+# mise - tooling and tasks for the aldersfors Renovate preset.
+# A bad default.json5 changes dependency management in every aldersfors repo,
+# so CI runs the strict validator on every change.
+[settings]
+lockfile = true
+lockfile_platforms = ["macos-arm64", "linux-x64"]
+
+[tools]
+# renovate 44 needs node 24.11 or newer.
+node = "24.21.0"
+
+[env]
+# Updated by the custom manager in renovate.json5.
+RENOVATE_VERSION = "44.132.5"
+
+[tasks.validate]
+description = "Validate default.json5 and renovate.json5 against the Renovate schema"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+# --no-global: these are a shared preset and a repo config, not self-hosted
+# global config, which the validator otherwise assumes for named files.
+# --strict also fails on warnings and pending config migrations.
+npx --yes --package "renovate@${RENOVATE_VERSION}" \
+  renovate-config-validator --no-global --strict default.json5 renovate.json5
+'''
+
+[tasks.ci]
+description = "Everything CI runs"
+depends = ["validate"]

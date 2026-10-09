@@ -1,0 +1,84 @@
+{
+  // Shared Renovate preset for the aldersfors org.
+  // Extend from a repo with: extends: ["github>aldersfors/aldersfors:default.json5"]
+  // The :default.json5 suffix is required; the bare shorthand only resolves default.json.
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: [
+    "config:recommended",
+    // Picks up version pins in workflow env (MISE_VERSION and similar).
+    "customManagers:githubActionsVersions",
+  ],
+
+  timezone: "Europe/Stockholm",
+  semanticCommits: "enabled",
+  labels: ["dependencies"],
+
+  // Let Renovate open a PR when a deprecated option needs migrating.
+  configMigration: true,
+
+  // Flag dependencies with no release in a year as abandoned.
+  abandonmentThreshold: "1 year",
+
+  // Wait 5 days after a release before proposing it, which skips most yanked
+  // releases and hotfix churn. timestamp-optional keeps datasources that report
+  // no release date from being held back forever.
+  minimumReleaseAge: "5 days",
+  minimumReleaseAgeBehaviour: "timestamp-optional",
+
+  // Renovate merges by API inside this window instead of handing the PR to
+  // GitHub's native auto-merge. Native auto-merge ignores automergeSchedule once
+  // enabled and needs branch protection, which private repos on the Free plan
+  // cannot have.
+  automergeSchedule: "* 9-20 * * 1-5",
+  platformAutomerge: false,
+
+  postUpdateOptions: ["gomodTidy"],
+
+  // config:recommended pulls in :ignoreModulesAndTests, which hides every test
+  // directory from extraction. Manifests under test/ are real dependencies
+  // (matlistan keeps one), so this is the same list minus the test paths.
+  ignorePaths: [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__fixtures__/**",
+  ],
+
+  // Open PRs for OSV advisories too, not only GitHub's own alerts.
+  osvVulnerabilityAlerts: true,
+  vulnerabilityAlerts: {
+    labels: ["security", "dependencies"],
+  },
+
+  packageRules: [
+    {
+      // Minor, patch and digest bumps merge themselves once checks pass.
+      // Majors always wait for a human.
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      automerge: true,
+      addLabels: ["automerge"],
+    },
+    {
+      // Renovate skips indirect Go modules by default, which leaves every
+      // advisory on a transitive module with no PR that could fix it.
+      matchManagers: ["gomod"],
+      matchDepTypes: ["indirect"],
+      enabled: true,
+    },
+    {
+      // aws-sdk-go-v2 has so many tags that the changelog lookup gets a 502
+      // from GitHub, and Renovate treats that as a failed run. Only the release
+      // notes in the PR body are lost; they are generated API-model churn.
+      matchSourceUrls: ["https://github.com/aws/aws-sdk-go-v2{/**,}"],
+      fetchChangeLogs: "off",
+    },
+    {
+      // Keep mise CLI bumps in one PR.
+      matchDatasources: ["github-releases"],
+      matchPackageNames: ["jdx/mise"],
+      groupName: "mise",
+    },
+  ],
+}
