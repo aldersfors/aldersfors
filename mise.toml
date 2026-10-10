@@ -11,7 +11,7 @@ node = "24.21.0"
 
 [env]
 # Updated by the custom manager in renovate.json5.
-RENOVATE_VERSION = "44.132.5"
+RENOVATE_VERSION = "44.138.0"
 
 [tasks.validate]
 description = "Validate default.json5 and renovate.json5 against the Renovate schema"
